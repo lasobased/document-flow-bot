@@ -20,7 +20,7 @@
 
 ---
 
-### Шаг 1: Установка (30 секунд)
+### Шаг 1: Установка 
 
 ```bash
 cd document-flow-bot
@@ -133,29 +133,6 @@ print(result)
 
 ---
 
-## Git и GitHub
-
-### Инициализация репозитория
-
-```bash
-# Запустить автоматический скрипт
-./git-setup.sh
-
-# Или вручную:
-git init
-git add .
-git commit -m "Initial commit: Rule-Based validation system"
-```
-
-### Отправка на GitHub
-
-```bash
-git remote add origin https://github.com/your-username/document-flow-bot.git
-git branch -M main
-git push -u origin main
-```
-
----
 
 ## Типичные проблемы
 
@@ -214,7 +191,7 @@ streamlit run src/main.py --logger.level=debug
 - [x] Можно менять входные данные
 - [x] Коммиты с понятными сообщениями
 
-**Статус:** ✅ Все критерии выполнены
+**Статус:**  Все критерии выполнены
 
 ---
 
