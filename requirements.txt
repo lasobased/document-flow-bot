@@ -1,0 +1,18 @@
+# Core dependencies
+streamlit==1.31.0
+python-dateutil==2.8.2
+
+# Testing
+pytest==7.4.3
+pytest-cov==4.1.0
+
+# Code quality
+black==23.12.1
+flake8==7.0.0
+mypy==1.8.0
+
+# Future ML dependencies (for later weeks)
+# pandas==2.1.4
+# numpy==1.26.2
+# scikit-learn==1.3.2
+# transformers==4.36.2
