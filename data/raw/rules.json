@@ -1,19 +1,21 @@
 {
-  "scenario_name": "Document Validation System",
+  "critical_rules": {
+    "must_be_signed": true,
+    "must_have_inn": true,
+    "expiry_date_must_be_future": true
+  },
   "document_types": {
-    "allowed": ["invoice", "contract", "act", "receipt"],
-    "blacklisted": ["draft", "template"]
-  },
-  "thresholds": {
-    "min_amount": 0.01,
-    "max_amount": 10000000.00,
-    "expiry_warning_days": 30,
-    "max_document_age_days": 365
-  },
-  "inn_validation": {
-    "allowed_lengths": [10, 12],
-    "must_be_numeric": true,
-    "validate_checksum": true
+    "allowed": [
+      "invoice",
+      "contract",
+      "act",
+      "receipt"
+    ],
+    "blacklisted": [
+      "draft",
+      "template",
+      "cancelled"
+    ]
   },
   "required_fields": {
     "invoice": [
@@ -40,23 +42,24 @@
       "total_amount"
     ]
   },
-  "critical_rules": {
-    "must_be_signed": true,
-    "must_have_valid_date": true,
-    "must_have_inn": true,
-    "expiry_date_must_be_future": true
+  "inn_validation": {
+    "allowed_lengths": [10, 12]
   },
-  "date_format": "YYYY-MM-DD",
+  "thresholds": {
+    "min_amount": 0.01,
+    "max_amount": 10000000.00,
+    "expiry_warning_days": 30
+  },
   "validation_messages": {
-    "success": "[OK] Document passed all validation checks",
-    "error_not_signed": "[ERROR] Document must be digitally signed",
-    "error_invalid_type": "[ERROR] Document type not allowed",
+    "success": "[OK] Document validation passed",
+    "error_not_signed": "[ERROR] Document must be signed",
+    "error_invalid_type": "[ERROR] Invalid document type",
+    "error_missing_fields": "[ERROR] Missing required fields",
+    "error_invalid_date": "[ERROR] Invalid date format",
     "error_expired": "[ERROR] Document has expired",
-    "error_invalid_date": "[ERROR] Invalid date format or date in past",
-    "error_missing_fields": "[ERROR] Required fields are missing",
-    "error_invalid_inn": "[ERROR] INN format is invalid",
-    "error_amount_range": "[ERROR] Amount is outside allowed range",
-    "warning_expiring_soon": "[WARNING] Document expires within 30 days",
+    "error_invalid_inn": "[ERROR] Invalid INN format",
+    "error_amount_range": "[ERROR] Amount is out of valid range",
+    "warning_expiring_soon": "[WARNING] Document is expiring soon",
     "warning_large_amount": "[WARNING] Unusually large amount detected"
   }
 }
