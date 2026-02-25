@@ -1,3 +1,8 @@
+from batch_validation import render_batch_validation_page
+from logic import check_rules
+
+# В разделе Batch Validation:
+render_batch_validation_page(check_rules)
 """
 Streamlit интерфейс для системы валидации документов.
 Позволяет интерактивно тестировать правила валидации.
