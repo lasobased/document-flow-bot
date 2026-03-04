@@ -63,3 +63,73 @@
     "warning_large_amount": "[WARNING] Unusually large amount detected"
   }
 }
+
+{
+  "critical_rules": {
+    "must_be_signed": true,
+    "must_have_inn": true,
+    "expiry_date_must_be_future": true
+  },
+  "document_types": {
+    "allowed": [
+      "invoice",
+      "contract",
+      "act",
+      "receipt"
+    ],
+    "blacklisted": [
+      "draft",
+      "template",
+      "cancelled"
+    ]
+  },
+  "required_fields": {
+    "invoice": [
+      "document_number",
+      "issue_date",
+      "total_amount",
+      "inn"
+    ],
+    "contract": [
+      "document_number",
+      "issue_date",
+      "expiry_date",
+      "total_amount",
+      "inn"
+    ],
+    "act": [
+      "document_number",
+      "issue_date",
+      "total_amount"
+    ],
+    "receipt": [
+      "document_number",
+      "issue_date",
+      "total_amount"
+    ]
+  },
+  "inn_validation": {
+    "allowed_lengths": [
+      10,
+      12
+    ]
+  },
+  "thresholds": {
+    "min_amount": 0.01,
+    "max_amount": 10000000.00,
+    "expiry_warning_days": 30,
+    "large_amount_threshold_percent": 0.8
+  },
+  "validation_messages": {
+    "success": "[OK] Document passed all validation checks",
+    "error_not_signed": "[ERROR] Document must be digitally signed",
+    "error_invalid_type": "[ERROR] Invalid document type",
+    "error_missing_fields": "[ERROR] Missing required fields",
+    "error_invalid_date": "[ERROR] Invalid date format",
+    "error_expired": "[ERROR] Document has expired",
+    "error_invalid_inn": "[ERROR] Invalid INN format",
+    "error_amount_range": "[ERROR] Amount is outside allowed range",
+    "warning_expiring_soon": "[WARNING] Document expires within 30 days",
+    "warning_large_amount": "[WARNING] Unusually large amount detected"
+  }
+}
