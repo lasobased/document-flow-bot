@@ -1,164 +1,218 @@
 """
-Mock data для тестирования системы валидации документов.
-Содержит примеры корректных и некорректных документов.
+Mock Data - Набор тестовых документов для системы валидации.
+
+Содержит 9 предопределенных сценариев:
+- 3 валидных документа (OK)
+- 4 документа с ошибками (ERROR)
+- 2 документа с предупреждениями (WARNING)
 """
 
 from datetime import datetime, timedelta
 
-# Вычисляем даты относительно текущей даты
-TODAY = datetime.now().strftime("%Y-%m-%d")
-TOMORROW = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
-NEXT_MONTH = (datetime.now() + timedelta(days=45)).strftime("%Y-%m-%d")
-EXPIRED = (datetime.now() - timedelta(days=10)).strftime("%Y-%m-%d")
-EXPIRING_SOON = (datetime.now() + timedelta(days=15)).strftime("%Y-%m-%d")
-
 # ========================================
-# КОРРЕКТНЫЕ ДОКУМЕНТЫ (ДОЛЖНЫ ПРОЙТИ)
+# ВАЛИДНЫЕ ДОКУМЕНТЫ (OK)
 # ========================================
 
-valid_invoice = {
+# ✅ Пример 1: Валидная накладная
+VALID_INVOICE = {
     "document_type": "invoice",
     "document_number": "INV-2024-0001",
-    "issue_date": TODAY,
-    "expiry_date": NEXT_MONTH,
+    "issue_date": "2024-02-04",
+    "expiry_date": "2024-03-20",
     "total_amount": 15000.50,
-    "inn": "7743013902",  # 10 цифр - юридическое лицо
+    "inn": "7743013902",
     "required_fields": ["document_number", "issue_date", "total_amount", "inn"],
     "is_signed": True
 }
 
-valid_contract = {
+# ✅ Пример 2: Валидный контракт
+VALID_CONTRACT = {
     "document_type": "contract",
-    "document_number": "DOG-2024-045",
-    "issue_date": TODAY,
-    "expiry_date": NEXT_MONTH,
+    "document_number": "DOG-2024-0042",
+    "issue_date": "2024-02-04",
+    "expiry_date": "2025-02-04",  # На 1 год
     "total_amount": 500000.00,
-    "inn": "526317984689",  # 12 цифр - физическое лицо
+    "inn": "9876543210",
     "required_fields": ["document_number", "issue_date", "expiry_date", "total_amount", "inn"],
     "is_signed": True
 }
 
-valid_act = {
-    "document_type": "act",
-    "document_number": "ACT-2024-123",
-    "issue_date": TODAY,
-    "expiry_date": NEXT_MONTH,
-    "total_amount": 75000.00,
-    "inn": "7707083893",
+# ✅ Пример 3: Валидный расходный ордер
+VALID_RECEIPT = {
+    "document_type": "receipt",
+    "document_number": "RCP-2024-0042",
+    "issue_date": "2024-02-04",
+    "total_amount": 3500.00,
+    "inn": "5555666677",
     "required_fields": ["document_number", "issue_date", "total_amount"],
     "is_signed": True
 }
 
 # ========================================
-# НЕКОРРЕКТНЫЕ ДОКУМЕНТЫ (С ОШИБКАМИ)
+# ДОКУМЕНТЫ С ОШИБКАМИ (ERROR)
 # ========================================
 
-# Критическая ошибка: документ не подписан
-unsigned_document = {
+# ❌ Ошибка 1: Неподписанный документ
+ERROR_UNSIGNED = {
     "document_type": "invoice",
     "document_number": "INV-2024-0002",
-    "issue_date": TODAY,
-    "expiry_date": NEXT_MONTH,
+    "issue_date": "2024-02-04",
+    "expiry_date": "2024-03-04",
     "total_amount": 10000.00,
     "inn": "7743013902",
     "required_fields": ["document_number", "issue_date", "total_amount", "inn"],
-    "is_signed": False  # ОШИБКА: не подписан
+    "is_signed": False  # ❌ Нет подписи
 }
 
-# Критическая ошибка: просроченный документ
-expired_document = {
+# ❌ Ошибка 2: Некорректный ИНН
+ERROR_INVALID_INN = {
+    "document_type": "invoice",
+    "document_number": "INV-2024-0003",
+    "issue_date": "2024-02-04",
+    "expiry_date": "2024-03-04",
+    "total_amount": 5000.00,
+    "inn": "123456",  # ❌ Только 6 цифр (должно быть 10 или 12)
+    "required_fields": ["document_number", "issue_date", "total_amount", "inn"],
+    "is_signed": True
+}
+
+# ❌ Ошибка 3: Просроченный документ
+ERROR_EXPIRED = {
     "document_type": "contract",
     "document_number": "DOG-2023-999",
     "issue_date": "2023-12-01",
-    "expiry_date": EXPIRED,  # ОШИБКА: срок истек
+    "expiry_date": "2024-01-15",  # ❌ Дата в прошлом
     "total_amount": 250000.00,
     "inn": "7743013902",
     "required_fields": ["document_number", "issue_date", "expiry_date", "total_amount", "inn"],
     "is_signed": True
 }
 
-# Ошибка: некорректный ИНН
-invalid_inn_document = {
-    "document_type": "invoice",
-    "document_number": "INV-2024-0003",
-    "issue_date": TODAY,
-    "expiry_date": NEXT_MONTH,
-    "total_amount": 5000.00,
-    "inn": "123",  # ОШИБКА: неверная длина ИНН
-    "required_fields": ["document_number", "issue_date", "total_amount", "inn"],
-    "is_signed": True
-}
-
-# Ошибка: сумма вне допустимого диапазона
-invalid_amount_document = {
-    "document_type": "invoice",
-    "document_number": "INV-2024-0004",
-    "issue_date": TODAY,
-    "expiry_date": NEXT_MONTH,
-    "total_amount": -1000.00,  # ОШИБКА: отрицательная сумма
-    "inn": "7743013902",
-    "required_fields": ["document_number", "issue_date", "total_amount", "inn"],
-    "is_signed": True
-}
-
-# Ошибка: запрещенный тип документа
-blacklisted_document = {
-    "document_type": "draft",  # ОШИБКА: черновик не разрешен
+# ❌ Ошибка 4: Запрещенный тип документа
+ERROR_BLACKLISTED_TYPE = {
+    "document_type": "draft",  # ❌ Черновик запрещен
     "document_number": "DRAFT-001",
-    "issue_date": TODAY,
-    "expiry_date": NEXT_MONTH,
+    "issue_date": "2024-02-04",
+    "expiry_date": "2024-03-04",
     "total_amount": 1000.00,
     "inn": "7743013902",
     "required_fields": ["document_number", "issue_date", "total_amount", "inn"],
     "is_signed": True
 }
 
-# Предупреждение: срок истекает скоро
-expiring_soon_document = {
+# ========================================
+# ДОКУМЕНТЫ С ПРЕДУПРЕЖДЕНИЯМИ (WARNING)
+# ========================================
+
+# ⚠️ Предупреждение 1: Скорое истечение
+WARNING_EXPIRING_SOON = {
     "document_type": "contract",
     "document_number": "DOG-2024-046",
     "issue_date": "2024-01-15",
-    "expiry_date": EXPIRING_SOON,  # ПРЕДУПРЕЖДЕНИЕ: истекает через 15 дней
+    "expiry_date": "2024-02-19",  # ⚠️ Истекает через ~15 дней
     "total_amount": 100000.00,
     "inn": "7743013902",
     "required_fields": ["document_number", "issue_date", "expiry_date", "total_amount", "inn"],
     "is_signed": True
 }
 
-# Предупреждение: очень большая сумма
-large_amount_document = {
+# ⚠️ Предупреждение 2: Большая сумма
+WARNING_LARGE_AMOUNT = {
     "document_type": "contract",
     "document_number": "DOG-2024-047",
-    "issue_date": TODAY,
-    "expiry_date": NEXT_MONTH,
-    "total_amount": 9500000.00,  # ПРЕДУПРЕЖДЕНИЕ: близко к лимиту
+    "issue_date": "2024-02-04",
+    "expiry_date": "2024-03-20",
+    "total_amount": 9500000.00,  # ⚠️ Близко к лимиту 10M (80% от максимума)
     "inn": "7743013902",
     "required_fields": ["document_number", "issue_date", "expiry_date", "total_amount", "inn"],
     "is_signed": True
 }
 
 # ========================================
-# НАБОР ДЛЯ ТЕСТИРОВАНИЯ
+# ГРУППЫ ТЕСТОВ (для удобства)
 # ========================================
 
-all_test_cases = {
-    "valid": [
-        ("Valid Invoice", valid_invoice),
-        ("Valid Contract", valid_contract),
-        ("Valid Act", valid_act),
-    ],
-    "errors": [
-        ("Unsigned Document", unsigned_document),
-        ("Expired Document", expired_document),
-        ("Invalid INN", invalid_inn_document),
-        ("Invalid Amount", invalid_amount_document),
-        ("Blacklisted Type", blacklisted_document),
-    ],
-    "warnings": [
-        ("Expiring Soon", expiring_soon_document),
-        ("Large Amount", large_amount_document),
-    ]
+VALID_DOCUMENTS = {
+    "valid_invoice": VALID_INVOICE,
+    "valid_contract": VALID_CONTRACT,
+    "valid_receipt": VALID_RECEIPT,
 }
 
-# Документ по умолчанию для интерфейса
-default_document = valid_invoice
+ERROR_DOCUMENTS = {
+    "error_unsigned": ERROR_UNSIGNED,
+    "error_invalid_inn": ERROR_INVALID_INN,
+    "error_expired": ERROR_EXPIRED,
+    "error_blacklisted_type": ERROR_BLACKLISTED_TYPE,
+}
+
+WARNING_DOCUMENTS = {
+    "warning_expiring_soon": WARNING_EXPIRING_SOON,
+    "warning_large_amount": WARNING_LARGE_AMOUNT,
+}
+
+ALL_DOCUMENTS = {
+    **VALID_DOCUMENTS,
+    **ERROR_DOCUMENTS,
+    **WARNING_DOCUMENTS,
+}
+
+# ========================================
+# УТИЛИТЫ
+# ========================================
+
+def get_all_test_cases():
+    """Возвращает все тестовые документы с метаданными."""
+    return {
+        "valid": {
+            "count": len(VALID_DOCUMENTS),
+            "documents": VALID_DOCUMENTS,
+            "expected_result": "[OK]"
+        },
+        "errors": {
+            "count": len(ERROR_DOCUMENTS),
+            "documents": ERROR_DOCUMENTS,
+            "expected_result": "[ERROR]"
+        },
+        "warnings": {
+            "count": len(WARNING_DOCUMENTS),
+            "documents": WARNING_DOCUMENTS,
+            "expected_result": "[WARNING]"
+        }
+    }
+
+def get_test_by_name(name: str):
+    """Получить тестовый документ по названию."""
+    return ALL_DOCUMENTS.get(name)
+
+def get_test_summary():
+    """Вернуть статистику по тестам."""
+    return {
+        "total_tests": len(ALL_DOCUMENTS),
+        "valid_tests": len(VALID_DOCUMENTS),
+        "error_tests": len(ERROR_DOCUMENTS),
+        "warning_tests": len(WARNING_DOCUMENTS),
+    }
+
+# ========================================
+# ПРИМЕРЫ ИСПОЛЬЗОВАНИЯ
+# ========================================
+
+if __name__ == "__main__":
+    print("📋 Доступные тестовые документы:\n")
+    
+    print("✅ ВАЛИДНЫЕ документы:")
+    for name in VALID_DOCUMENTS.keys():
+        print(f"   - {name}")
+    
+    print("\n❌ ДОКУМЕНТЫ С ОШИБКАМИ:")
+    for name in ERROR_DOCUMENTS.keys():
+        print(f"   - {name}")
+    
+    print("\n⚠️ ДОКУМЕНТЫ С ПРЕДУПРЕЖДЕНИЯМИ:")
+    for name in WARNING_DOCUMENTS.keys():
+        print(f"   - {name}")
+    
+    print("\n📊 Статистика:")
+    stats = get_test_summary()
+    for key, value in stats.items():
+        print(f"   {key}: {value}")
