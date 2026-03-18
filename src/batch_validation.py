@@ -170,3 +170,23 @@ def render_batch_validation_page(check_rules_fn):
                 for doc, result in zip(documents, results):
                     if "[ERROR]" in result:
                         st.error(f"**{doc['document_number']}** — {result}")
+if __name__ == "__main__":
+    # Quick smoke-test — запускается напрямую: python batch_validation.py
+    def mock_check_rules(doc: dict) -> str:
+        if doc["document_type"] in ("draft",):
+            return "[ERROR] Тип документа в чёрном списке"
+        if not doc["is_signed"]:
+            return "[WARNING] Документ не подписан"
+        if len(doc["inn"]) not in (10, 12):
+            return "[ERROR] Некорректный ИНН"
+        return "[OK] Документ прошёл проверку"
+
+    print("=== Batch Validation — smoke test ===")
+    sample_csv = generate_sample_csv()
+    df = pd.read_csv(io.StringIO(sample_csv))
+
+    for _, row in df.iterrows():
+        doc = row_to_document(row)
+        result = mock_check_rules(doc)
+        emoji = get_status_emoji(result)
+        print(f"{emoji}  {doc['document_number']:10s}  {result}")
