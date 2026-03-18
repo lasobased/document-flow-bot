@@ -216,3 +216,47 @@ if __name__ == "__main__":
     stats = get_test_summary()
     for key, value in stats.items():
         print(f"   {key}: {value}")
+# ========================================
+# SMOKE TEST
+# ========================================
+
+def run_smoke_test(check_rules_fn):
+    """
+    Прогоняет все тестовые документы через check_rules и проверяет ожидаемые результаты.
+    
+    Использование:
+        from mock_data import run_smoke_test
+        from logic import check_rules
+        run_smoke_test(check_rules)
+    """
+    cases = get_all_test_cases()
+    passed = 0
+    failed = 0
+
+    print("🧪 Запуск smoke test...\n")
+
+    for category, data in cases.items():
+        expected = data["expected_result"]
+        print(f"--- {category.upper()} (ожидаем {expected}) ---")
+
+        for name, doc in data["documents"].items():
+            result = check_rules_fn(doc)
+            ok = expected in result
+            icon = "✅" if ok else "❌ FAIL"
+            print(f"  {icon}  {name:30s}  →  {result}")
+            if ok:
+                passed += 1
+            else:
+                failed += 1
+
+        print()
+
+    print(f"{'='*50}")
+    print(f"Итого: {passed} passed, {failed} failed из {passed+failed}")
+    return failed == 0
+
+
+if __name__ == "__main__":
+    # Уже есть вывод списка документов выше — добавляем тест если передан check_rules
+    print("\n" + "="*50)
+    print("💡 Для запуска smoke test вызови run_smoke_test(check_rules)")
