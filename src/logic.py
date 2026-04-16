@@ -278,6 +278,192 @@ def get_validation_summary(document: Dict) -> Dict:
             'status': 'PASS' if is_valid else 'FAIL',
             'message': msg
         }
+
+# ========================================
+# РАСШИРЕННАЯ АНАЛИТИКА И УТИЛИТЫ
+# ========================================
+
+def batch_check_rules(documents: list) -> list[dict]:
+    """
+    Пакетная валидация списка документов.
+    Возвращает список с результатами и метаданными.
+    """
+    results = []
+    for i, doc in enumerate(documents):
+        try:
+            verdict = check_rules(doc)
+            results.append({
+                "index": i,
+                "document_number": doc.get("document_number", "N/A"),
+                "verdict": verdict,
+                "status": "ERROR" if "[ERROR]" in verdict else "WARNING" if "[WARNING]" in verdict else "OK",
+            })
+        except Exception as e:
+            results.append({
+                "index": i,
+                "document_number": doc.get("document_number", "N/A"),
+                "verdict": f"[ERROR] Исключение при валидации: {str(e)}",
+                "status": "ERROR",
+            })
+    return results
+
+
+def get_batch_statistics(batch_results: list[dict]) -> dict:
+    """
+    Считает статистику по результатам пакетной валидации.
+    """
+    total = len(batch_results)
+    ok      = sum(1 for r in batch_results if r["status"] == "OK")
+    warnings = sum(1 for r in batch_results if r["status"] == "WARNING")
+    errors  = sum(1 for r in batch_results if r["status"] == "ERROR")
+
+    return {
+        "total":        total,
+        "ok":           ok,
+        "warnings":     warnings,
+        "errors":       errors,
+        "ok_rate":      round(ok / total * 100, 2) if total else 0,
+        "error_rate":   round(errors / total * 100, 2) if total else 0,
+    }
+
+
+def filter_by_status(batch_results: list[dict], status: str) -> list[dict]:
+    """
+    Фильтрует результаты по статусу: 'OK', 'WARNING', 'ERROR'.
+    """
+    status = status.upper()
+    return [r for r in batch_results if r["status"] == status]
+
+
+def validate_document_safe(document: dict) -> Tuple[str, dict]:
+    """
+    Безопасная обёртка над check_rules — никогда не падает.
+    Возвращает (verdict, meta).
+    """
+    meta = {
+        "document_number": document.get("document_number", "N/A"),
+        "document_type":   document.get("document_type", "unknown"),
+        "exception":       None,
+    }
+    try:
+        verdict = check_rules(document)
+    except Exception as e:
+        verdict = f"[ERROR] Внутренняя ошибка: {str(e)}"
+        meta["exception"] = str(e)
+    return verdict, meta
+
+
+def explain_verdict(verdict: str) -> dict:
+    """
+    Разбирает вердикт на составляющие для UI.
+    """
+    if "[ERROR]" in verdict:
+        level = "error"
+        emoji = "❌"
+        color = "red"
+    elif "[WARNING]" in verdict:
+        level = "warning"
+        emoji = "⚠️"
+        color = "orange"
+    else:
+        level = "ok"
+        emoji = "✅"
+        color = "green"
+
+    return {
+        "level":   level,
+        "emoji":   emoji,
+        "color":   color,
+        "message": verdict,
+        "short":   verdict.split("]", 1)[-1].strip() if "]" in verdict else verdict,
+    }
+
+
+def compare_documents(doc_a: dict, doc_b: dict) -> dict:
+    """
+    Сравнивает два документа и возвращает diff по ключевым полям.
+    """
+    fields = ["document_type", "document_number", "issue_date",
+              "expiry_date", "total_amount", "inn", "is_signed"]
+    diff = {}
+    for field in fields:
+        val_a = doc_a.get(field)
+        val_b = doc_b.get(field)
+        if val_a != val_b:
+            diff[field] = {"a": val_a, "b": val_b}
+    return diff
+
+
+def get_risk_score(document: dict) -> dict:
+    """
+    Простая скоринговая модель риска документа (0–100).
+    Чем выше — тем рискованнее.
+    """
+    score = 0
+    reasons = []
+
+    if not document.get("is_signed", False):
+        score += 40
+        reasons.append("Документ не подписан (+40)")
+
+    amount = document.get("total_amount", 0)
+    if amount > 1_000_000:
+        score += 30
+        reasons.append("Сумма > 1 000 000 (+30)")
+    elif amount > 500_000:
+        score += 15
+        reasons.append("Сумма > 500 000 (+15)")
+
+    inn = str(document.get("inn", ""))
+    if inn and len(inn) not in (10, 12):
+        score += 20
+        reasons.append("Некорректный ИНН (+20)")
+
+    doc_type = document.get("document_type", "")
+    if doc_type in ("draft", "unknown", ""):
+        score += 25
+        reasons.append(f"Подозрительный тип документа '{doc_type}' (+25)")
+
+    score = min(score, 100)
+
+    if score >= 60:
+        level = "HIGH"
+    elif score >= 30:
+        level = "MEDIUM"
+    else:
+        level = "LOW"
+
+    return {"score": score, "level": level, "reasons": reasons}
+
+
+def enrich_document(document: dict) -> dict:
+    """
+    Добавляет в документ вычисляемые поля перед валидацией.
+    """
+    from datetime import datetime
+
+    enriched = document.copy()
+
+    # Добавляем метку времени обработки
+    enriched["_processed_at"] = datetime.now().isoformat()
+
+    # Нормализуем тип документа
+    enriched["document_type"] = str(document.get("document_type", "")).strip().lower()
+
+    # Нормализуем ИНН — убираем пробелы
+    if "inn" in enriched:
+        enriched["inn"] = str(enriched["inn"]).strip().replace(" ", "")
+
+    # Приводим сумму к float
+    try:
+        enriched["total_amount"] = float(document.get("total_amount", 0))
+    except (ValueError, TypeError):
+        enriched["total_amount"] = 0.0
+
+    # Добавляем риск-скор
+    enriched["_risk"] = get_risk_score(enriched)
+
+    return enriched
     
     # Определяем общий статус
     all_passed = all(check['status'] == 'PASS' for check in summary['checks'].values())
