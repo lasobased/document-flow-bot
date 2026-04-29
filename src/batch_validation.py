@@ -190,3 +190,35 @@ if __name__ == "__main__":
         result = mock_check_rules(doc)
         emoji = get_status_emoji(result)
         print(f"{emoji}  {doc['document_number']:10s}  {result}")
+
+# --- Итоговая статистика ---
+total = len(df)
+errors   = sum(1 for _, row in df.iterrows() if "[ERROR]"   in mock_check_rules(row_to_document(row)))
+warnings = sum(1 for _, row in df.iterrows() if "[WARNING]" in mock_check_rules(row_to_document(row)))
+ok       = total - errors - warnings
+
+print("\n" + "="*40)
+print("📊 ИТОГОВАЯ СТАТИСТИКА")
+print("="*40)
+print(f"  Всего документов : {total}")
+print(f"  ✅ Прошли        : {ok}")
+print(f"  ⚠️  Предупреждения: {warnings}")
+print(f"  ❌ Ошибки        : {errors}")
+print("="*40)
+
+# --- Список проблемных документов ---
+print("\n🔍 Проблемные документы:")
+found = False
+for _, row in df.iterrows():
+    doc = row_to_document(row)
+    result = mock_check_rules(doc)
+    if "[ERROR]" in result or "[WARNING]" in result:
+        emoji = get_status_emoji(result)
+        print(f"  {emoji}  {doc['document_number']:12s}  {doc['document_type']:10s}  {result}")
+        found = True
+if not found:
+    print("  Проблем не найдено!")
+
+# --- Время завершения ---
+print(f"\n🕐 Проверка завершена: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+print("="*40)
